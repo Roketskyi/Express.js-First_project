@@ -1,6 +1,6 @@
 const express = require('express');
 const { MongoClient } = require('mongodb');
-
+const mongodb = require('mongodb');
 const app = express();
 
 const IP = 'localhost';
@@ -23,28 +23,15 @@ app.get('/', (req, res) => {
     res.send('Hello world!');
 })
 
-app.post('/addArray', async (req, res) => {
-  const data = [req.body];
+app.post('/add-array', async (req, res) => {
+  const data = req.body;
   const db = client.db(dbName);
   const collection = db.collection('temperatureData');
   
   try {
-    const maxId = await collection.find().sort({ id: -1 }).limit(1).toArray();
-    const newId = maxId.length > 0 ? maxId[0].id + 1 : 1;
+    const result = await collection.insertMany(data);
 
-    const dataWithDate = data.map((item) => ({ 
-      serialNumber: item.serialNumber,
-      temperature: item.temperature,
-      date: new Date().toISOString().replace('T', '-').replace(/\..*/, '') 
-    }));
-
-    const dataWithId = dataWithDate.map((item) => ({ id: newId, ...item }));
-  
-    const result = await collection.insertMany(dataWithId);
-
-    console.log(`${result.insertedCount} information has been added to the database`);
-
-    res.status(201).send('information has been added to the database');
+    res.status(201).send(`${JSON.stringify(data)}`);
   } catch (err) {
     console.error(err);
     
@@ -52,13 +39,13 @@ app.post('/addArray', async (req, res) => {
   }
 });
 
-app.get('/base/:id?', async (req, res) => {
+app.get('/base/:_id?', async (req, res) => {
   const db = client.db(dbName);
   const collection = db.collection('temperatureData');
 
   try {
       if (req.params.id) {
-          const document = await collection.findOne({ id: +req.params.id });
+          const document = await collection.findOne({ _id: req.params.id });
           if (document) {
               res.json(document);
           } else {
@@ -74,7 +61,7 @@ app.get('/base/:id?', async (req, res) => {
   }
 });
 
-app.delete('/cleanArray/:id?', async (req, res) => {
+app.delete('/clean-array/:id?', async (req, res) => {
   const db = client.db(dbName);
   const collection = db.collection('temperatureData');
 
