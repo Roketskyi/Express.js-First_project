@@ -23,41 +23,79 @@ app.get('/', (req, res) => {
     res.send('Hello world!');
 })
 
-app.post('/add-array', async (req, res) => {
-  const data = req.body;
-  const db = client.db(dbName);
-  const collection = db.collection('temperatureData');
-  
-  try {
-    const result = await collection.insertMany(data);
+const { body, validationResult } = require('express-validator');
 
-    res.status(201).send(`${JSON.stringify(data)}`);
-  } catch (err) {
-    console.error(err);
-    
-    res.status(500).send(err.message);
+app.post('/my-route', [
+  // Проверяем параметр param1
+  body('param1').notEmpty().withMessage('Параметр param1 обязателен'),
+  // Проверяем параметр param2
+  body('param2').notEmpty().withMessage('Параметр param2 обязателен'),
+  // Проверяем параметр param3
+  body('param3').notEmpty().withMessage('Параметр param3 обязателен'),
+  // Проверяем параметр param4
+  body('param4').notEmpty().withMessage('Параметр param4 обязателен')
+], (req, res) => {
+  // Проверяем наличие ошибок валидации
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
   }
+
+  // Если все параметры присутствуют, сохраняем данные в базе данных
+  const collection = client.db('dbName').collection('temperatureData');
+  const data = {
+    param1: req.body.param1,
+    param2: req.body.param2,
+    param3: req.body.param3,
+    param4: req.body.param4
+  };
+  collection.insertOne(data, (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ message: 'Ошибка сервера' });
+    }
+    return res.status(200).json({ message: 'Данные успешно сохранены' });
+  });
 });
 
-app.get('/base/:_id?', async (req, res) => {
+// app.post('/add-array', async (req, res) => {
+//   const data = req.body;
+//   const db = client.db(dbName);
+//   const collection = db.collection('temperatureData');
+  
+//   try {
+//     const result = await collection.insertMany(data);
+
+//     res.status(201).send(`${JSON.stringify(result)}`);
+//   } catch (err) {
+//     console.error(err);
+    
+//     res.status(500).send(err.message);
+//   }
+// });
+
+app.get('/base/:id?', async (req, res) => {
+  const ObjectId = require('mongodb').ObjectId;
+  
   const db = client.db(dbName);
   const collection = db.collection('temperatureData');
 
   try {
-      if (req.params.id) {
-          const document = await collection.findOne({ _id: req.params.id });
-          if (document) {
-              res.json(document);
-          } else {
-              res.status(404).send('There is no information');
-          }
+    if (req.params.id) {
+      
+      const document = await collection.findOne({ _id: new ObjectId(req.params.id) });
+      if (document) {
+        res.json(document);
       } else {
-          const documents = await collection.find().toArray();
-          res.status(201).json(documents);
+        res.status(404).send('There is no information');
       }
+    } else {
+      const documents = await collection.find().toArray();
+      res.status(200).json(documents);
+    }
   } catch (err) {
-      console.error(err);
-      res.status(500).send(err.message);
+    console.error(err);
+    res.status(500).send(err.message);
   }
 });
 
@@ -67,21 +105,25 @@ app.delete('/clean-array/:id?', async (req, res) => {
 
   try {
     if (req.params.id) {
-      const result = await collection.deleteOne({ id: +req.params.id });
-      console.log(`Deleted document with id ${req.params.id}`);
-      
-      res.json(result);
-    } else {
-      const result = await collection.drop();
-      console.log(`Dropped collection ${collection.collectionName}`);
+      const doc = await collection.findOne({ _id: new mongodb.ObjectId(req.params.id) });
 
-      res.json(result);
+      if (!doc) return res.status(404).send(`Document with id "${req.params.id}" not found`);
+
+      await collection.deleteOne({ _id: new mongodb.ObjectId(req.params.id) });      
+      res.send(`Deleted document with id "${req.params.id}"`);
+    } else {
+      await collection.drop();
+      
+      res.send(`Dropped collection ${collection.collectionName}`);
     }
   } catch (err) {
     console.error(err);
+
     res.status(500).send(err.message);
   }
 });
+
+
 
 
 app.listen(3000, () => {
