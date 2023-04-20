@@ -1,6 +1,9 @@
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const mongodb = require('mongodb');
+const ObjectId = require('mongodb').ObjectId;
+const Joi = require('joi');
+
 const app = express();
 
 const IP = 'localhost';
@@ -19,64 +22,36 @@ connectToDb().catch(console.error);
 
 app.use(express.json());
 
-app.get('/', (req, res) => {
-    res.send('Hello world!');
-})
 
-const { body, validationResult } = require('express-validator');
-
-app.post('/my-route', [
-  // Проверяем параметр param1
-  body('param1').notEmpty().withMessage('Параметр param1 обязателен'),
-  // Проверяем параметр param2
-  body('param2').notEmpty().withMessage('Параметр param2 обязателен'),
-  // Проверяем параметр param3
-  body('param3').notEmpty().withMessage('Параметр param3 обязателен'),
-  // Проверяем параметр param4
-  body('param4').notEmpty().withMessage('Параметр param4 обязателен')
-], (req, res) => {
-  // Проверяем наличие ошибок валидации
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  // Если все параметры присутствуют, сохраняем данные в базе данных
-  const collection = client.db('dbName').collection('temperatureData');
-  const data = {
-    param1: req.body.param1,
-    param2: req.body.param2,
-    param3: req.body.param3,
-    param4: req.body.param4
-  };
-  collection.insertOne(data, (err, result) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ message: 'Ошибка сервера' });
-    }
-    return res.status(200).json({ message: 'Данные успешно сохранены' });
-  });
+const itemSchema = Joi.object({
+  serialNumber: Joi.string().required(),
+  temperature: Joi.number().required(),
+  date: Joi.string().pattern(/^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2}:[0-9]{2}:[0-9]{2}$/).required(),
 });
 
-// app.post('/add-array', async (req, res) => {
-//   const data = req.body;
-//   const db = client.db(dbName);
-//   const collection = db.collection('temperatureData');
-  
-//   try {
-//     const result = await collection.insertMany(data);
+const schema = Joi.array().items(itemSchema);
 
-//     res.status(201).send(`${JSON.stringify(result)}`);
-//   } catch (err) {
-//     console.error(err);
-    
-//     res.status(500).send(err.message);
-//   }
-// });
+const errorText = 'The parameters are entered incorrectly, they should look like this: [{"serialNumber": "123", "temperature": 1234.5, "date": "2023-01-01-12:34:56"}]';
 
-app.get('/base/:id?', async (req, res) => {
-  const ObjectId = require('mongodb').ObjectId;
-  
+app.post('/add-array', async (req, res) => {
+  const data = req.body;
+  const db = client.db(dbName);
+  const collection = db.collection('temperatureData');
+
+  try {
+    await schema.validateAsync(data);
+    await collection.insertMany(data);
+
+    res.status(200).send('The data array is added to the temperatureData collection');;
+  } catch (err) {
+    console.error(err);
+
+    res.status(400).send(errorText);
+  }
+});
+
+
+app.get('/base/:id?', async (req, res) => { 
   const db = client.db(dbName);
   const collection = db.collection('temperatureData');
 
@@ -95,9 +70,11 @@ app.get('/base/:id?', async (req, res) => {
     }
   } catch (err) {
     console.error(err);
+
     res.status(500).send(err.message);
   }
 });
+
 
 app.delete('/clean-array/:id?', async (req, res) => {
   const db = client.db(dbName);
@@ -122,8 +99,6 @@ app.delete('/clean-array/:id?', async (req, res) => {
     res.status(500).send(err.message);
   }
 });
-
-
 
 
 app.listen(3000, () => {
