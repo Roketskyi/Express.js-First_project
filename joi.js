@@ -47,6 +47,8 @@ const itemSchema = Joi.object({
 
 const schema = Joi.array().items(itemSchema);
 
+const errorText = 'Параметри введено не правильно, вони мають виглядати наступним чином: {"serialNumber": "112", "temperature": 3226.6, "date": "2023-04-05-18:59:04"}';
+
 app.post('/add-array', async (req, res) => {
   const data = req.body;
   const db = client.db(dbName);
@@ -60,7 +62,7 @@ app.post('/add-array', async (req, res) => {
   } catch (err) {
     console.error(err);
 
-    res.status(500).send(err.message);
+    res.status(400).send(errorText);
   }
 });
 
