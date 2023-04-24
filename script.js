@@ -40,9 +40,10 @@ app.post('/add-array', async (req, res) => {
 
   try {
     await schema.validateAsync(data);
-    await collection.insertMany(data);
+    const result = await collection.insertMany(data);
+    const id = result.insertedIds[0];
 
-    res.status(200).send('The data array is added to the temperatureData collection');;
+    res.status(200).send(`The data array is added to the temperatureData collection with an _id: ${id}`);;
   } catch (err) {
     console.error(err);
 
@@ -100,6 +101,44 @@ app.delete('/clean-array/:id?', async (req, res) => {
   }
 });
 
+app.get('/temperatureData/average/:from/:to', async (req, res) => {
+  const db = client.db(dbName);
+  const collection = db.collection('temperatureData');
+  const from = req.params.from;
+  const to = req.params.to;
+
+  try {
+    const result = await collection.aggregate([
+      {
+        $match: {
+          date: {
+            $gte: from,
+            $lte: to,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          avgTemperature: {
+            $avg: '$temperature',
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+        },
+      },
+    ]).toArray();
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).send(err.message);
+  }
+});
 
 app.listen(3000, () => {
   console.log(`Server listening on http://${IP}:${PORT}/`);
