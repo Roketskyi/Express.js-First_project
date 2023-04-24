@@ -140,6 +140,37 @@ app.get('/temperatureData/average/:from/:to', async (req, res) => {
   }
 });
 
+app.get('/sensor_data/:id', async (req, res) => {
+  const db = client.db(dbName);
+  const collection = db.collection('sensorData');
+
+  const query = { _id: new ObjectId(req.params.id) };
+  const startDate = req.query.startDate;
+  const endDate = req.query.endDate;
+
+  if (startDate && endDate) {
+    query.data = {
+      $gte: new Date(startDate),
+      $lte: new Date(endDate)
+    };
+  }
+
+  try {
+    const documents = await collection.find(query).toArray();
+
+    if (documents.length > 0) {
+      res.json(documents);
+    } else {
+      res.status(404).send('No information found for this sensor and time period.');
+    }
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).send(err.message);
+  }
+});
+
+
 app.listen(3000, () => {
   console.log(`Server listening on http://${IP}:${PORT}/`);
 });
