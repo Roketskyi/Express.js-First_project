@@ -197,7 +197,6 @@ app.get('/sensor_data/:id', async (req, res) => {
   }
 });
 
-
 app.listen(3000, () => {
   console.log(`Server listening on http://${IP}:${PORT}/`);
 });
