@@ -26,7 +26,9 @@ app.use(express.json());
 const itemSchema = Joi.object({
   serialNumber: Joi.string().required(),
   temperature: Joi.number().required(),
-  date: Joi.string().pattern(/^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2}:[0-9]{2}:[0-9]{2}$/).required(),
+  date: Joi.string()
+    .regex(/^(?:[0-9]{4})-(?:(?:0[1-9])|(?:1[0-2]))-(?:(?:0[1-9])|(?:[1-2][0-9])|(?:3[0-1]))-(?:(?:[0-1][0-9])|(?:2[0-3])):(?:(?:[0-5][0-9])|(?:60)):(?:(?:[0-5][0-9])|(?:60))$/)
+    .required(),
 });
 
 const schema = Joi.array().items(itemSchema);
@@ -37,20 +39,27 @@ app.post('/add-array', async (req, res) => {
   const data = req.body;
   const db = client.db(dbName);
   const collection = db.collection('temperatureData');
-
+  
   try {
     await schema.validateAsync(data);
-    const result = await collection.insertMany(data);
-    const id = result.insertedIds[0];
+    
+    for (let i = 0; i < data.length; i++) {
+      const item = data[i];
+      const date = new Date(item.date.replace(/-/g, '/'));
 
-    res.status(200).send(`The data array is added to the temperatureData collection with an _id: ${id}`);;
+      if (isNaN(date.getTime())) {
+        throw new Error(`Invalid date format for item with index ${i}`);
+      }
+    }
+
+    const result = await collection.insertMany(data);
+
+    res.status(200).send(`The data array is added to the temperatureData collection`);
   } catch (err) {
     console.error(err);
-
     res.status(400).send(errorText);
   }
 });
-
 
 app.get('/base/:id?', async (req, res) => { 
   const db = client.db(dbName);
@@ -76,7 +85,6 @@ app.get('/base/:id?', async (req, res) => {
   }
 });
 
-
 app.delete('/clean-array/:id?', async (req, res) => {
   const db = client.db(dbName);
   const collection = db.collection('temperatureData');
@@ -101,7 +109,8 @@ app.delete('/clean-array/:id?', async (req, res) => {
   }
 });
 
-app.get('/temperatureData/average/:from/:to', async (req, res) => {
+// Example: http://localhost:3000/average/2020-04-05-18:59:04/2024-04-05-18:59:04
+app.get('/average/:from/:to', async (req, res) => {
   const db = client.db(dbName);
   const collection = db.collection('temperatureData');
   const from = req.params.from;
@@ -140,22 +149,29 @@ app.get('/temperatureData/average/:from/:to', async (req, res) => {
   }
 });
 
+// Example: http://localhost:3000/sensor_data/41244124463634?startDate=2020-01-01-11:00:00&endDate=2024-01-01-23:59:59
 app.get('/sensor_data/:id', async (req, res) => {
   const db = client.db(dbName);
-  const collection = db.collection('sensorData');
+  const collection = db.collection('temperatureData');
 
-  const query = { _id: new ObjectId(req.params.id) };
+  const query = { serialNumber: req.params.id };
   const startDate = req.query.startDate;
   const endDate = req.query.endDate;
 
-  if (startDate && endDate) {
-    query.data = {
-      $gte: new Date(startDate),
-      $lte: new Date(endDate)
-    };
-  }
+  const dateRegex = /^(?:[0-9]{4})-(?:(?:0[1-9])|(?:1[0-2]))-(?:(?:0[1-9])|(?:[1-2][0-9])|(?:3[0-1]))-(?:(?:[0-1][0-9])|(?:2[0-3])):(?:(?:[0-5][0-9])|(?:59)):(?:(?:[0-5][0-9])|(?:59))$/;
 
   try {
+    if (startDate && endDate) {
+      if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+        throw new Error('Incorrect date format');
+      }
+
+      query.date = {
+        $gte: startDate,
+        $lte: endDate
+      };
+    }
+
     const documents = await collection.find(query).toArray();
 
     if (documents.length > 0) {
@@ -165,8 +181,11 @@ app.get('/sensor_data/:id', async (req, res) => {
     }
   } catch (err) {
     console.error(err);
-
-    res.status(500).send(err.message);
+    if (err.message === 'Incorrect date format') {
+      res.status(400).send('Data is incorrect');
+    } else {
+      res.status(500).send(err.message);
+    }
   }
 });
 
