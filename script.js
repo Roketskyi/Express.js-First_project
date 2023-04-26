@@ -22,12 +22,13 @@ connectToDb().catch(console.error);
 
 app.use(express.json());
 
+const dateRegex = /^(?:[0-9]{4})-(?:(?:0[1-9])|(?:1[0-2]))-(?:(?:0[1-9])|(?:[1-2][0-9])|(?:3[0-1]))-(?:(?:[0-1][0-9])|(?:2[0-3])):(?:(?:[0-5][0-9])|(?:59)):(?:(?:[0-5][0-9])|(?:59))$/;
 
 const itemSchema = Joi.object({
   serialNumber: Joi.string().required(),
   temperature: Joi.number().required(),
   date: Joi.string()
-    .regex(/^(?:[0-9]{4})-(?:(?:0[1-9])|(?:1[0-2]))-(?:(?:0[1-9])|(?:[1-2][0-9])|(?:3[0-1]))-(?:(?:[0-1][0-9])|(?:2[0-3])):(?:(?:[0-5][0-9])|(?:60)):(?:(?:[0-5][0-9])|(?:60))$/)
+    .regex(dateRegex)
     .required(),
 });
 
@@ -109,12 +110,16 @@ app.delete('/clean-array/:id?', async (req, res) => {
   }
 });
 
-// Example: http://localhost:3000/average/2020-04-05-18:59:04/2024-04-05-18:59:04
-app.get('/average/:from/:to', async (req, res) => {
+// Example: http://localhost:3000/average?from=2020-04-05-18:59:04&to=2024-04-05-18:59:59
+app.get('/average', async (req, res) => {
   const db = client.db(dbName);
   const collection = db.collection('temperatureData');
-  const from = req.params.from;
-  const to = req.params.to;
+  const from = req.query.from;
+  const to = req.query.to;
+
+  if (!dateRegex.test(from) || !dateRegex.test(to)) {
+    return res.status(400).send('Date entered incorrectly. Example: http://localhost:3000/average?from=2020-04-05-18:59:04&to=2024-04-05-18:59:59');
+  }
 
   try {
     const result = await collection.aggregate([
@@ -158,8 +163,6 @@ app.get('/sensor_data/:id', async (req, res) => {
   const startDate = req.query.startDate;
   const endDate = req.query.endDate;
 
-  const dateRegex = /^(?:[0-9]{4})-(?:(?:0[1-9])|(?:1[0-2]))-(?:(?:0[1-9])|(?:[1-2][0-9])|(?:3[0-1]))-(?:(?:[0-1][0-9])|(?:2[0-3])):(?:(?:[0-5][0-9])|(?:59)):(?:(?:[0-5][0-9])|(?:59))$/;
-
   try {
     if (startDate && endDate) {
       if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
@@ -170,6 +173,8 @@ app.get('/sensor_data/:id', async (req, res) => {
         $gte: startDate,
         $lte: endDate
       };
+    } else if (!endDate || !startDate) {
+      throw new Error(`Date entered incorrectly. Example: "http://localhost:3000/sensor_data/1?startDate=2023-01-11-11:12:59&endDate=2023-12-15-14:12:59"`);
     }
 
     const documents = await collection.find(query).toArray();
@@ -177,12 +182,15 @@ app.get('/sensor_data/:id', async (req, res) => {
     if (documents.length > 0) {
       res.json(documents);
     } else {
-      res.status(404).send('No information found for this sensor and time period.');
+      res.status(404).send('No information was found for this sensor for the specified time period');
     }
   } catch (err) {
     console.error(err);
+
     if (err.message === 'Incorrect date format') {
-      res.status(400).send('Data is incorrect');
+      res.status(400).send('Date entered incorrectly. Example: http://localhost:3000/sensor_data/14?startDate=2020-01-01-11:00:00&endDate=2024-01-01-23:59:59');
+    } else if (err.message === 'Missing endDate') {
+      res.status(400).send('Missing endDate');
     } else {
       res.status(500).send(err.message);
     }
