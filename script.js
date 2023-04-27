@@ -78,11 +78,12 @@ app.post('/add-array', async (req, res) => {
   }
 });
 
+// Example: http://localhost:3000/base || http://localhost:3000/base/15
 app.get('/base/:id?', async (req, res) => { 
   try {
     if (req.params.id) {
       
-      const document = await collection.findOne({ _id: new ObjectId(req.params.id) });
+      const document = await collection.findOne({ serialNumber: req.params.id });
       if (document) {
         res.json(document);
       } else {
@@ -99,6 +100,7 @@ app.get('/base/:id?', async (req, res) => {
   }
 });
 
+// Example: http://localhost:3000/clean-array/ || http://localhost:3000/clean-array/18
 app.delete('/clean-array/:id?', async (req, res) => {
   try {
     if (req.params.id) {
