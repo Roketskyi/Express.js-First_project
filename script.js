@@ -1,17 +1,25 @@
+// Library
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const mongodb = require('mongodb');
 const ObjectId = require('mongodb').ObjectId;
 const Joi = require('joi');
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger.json');
 
+// Express.js
 const app = express();
 
 const IP = 'localhost';
 const PORT = 3000;
 
+// MongoDB
 const url = "mongodb+srv://romanroketskiy05:Roman080805MLP@reynes.73bphty.mongodb.net/?retryWrites=true&w=majority";
 const dbName = 'myProject';
 const client = new MongoClient(url);
+
+const db = client.db(dbName); // Підключення до бази даних
+const collection = db.collection('temperatureData'); // Отримання колекції temperatureData
 
 async function connectToDb() {
   await client.connect();
@@ -20,8 +28,11 @@ async function connectToDb() {
 
 connectToDb().catch(console.error);
 
+// Swagger documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use(express.json());
 
+// Code
 const dateRegex = /^(?:[0-9]{4})-(?:(?:0[1-9])|(?:1[0-2]))-(?:(?:0[1-9])|(?:[1-2][0-9])|(?:3[0-1]))-(?:(?:[0-1][0-9])|(?:2[0-3])):(?:(?:[0-5][0-9])|(?:59)):(?:(?:[0-5][0-9])|(?:59))$/;
 
 const itemSchema = Joi.object({
@@ -32,17 +43,15 @@ const itemSchema = Joi.object({
     .required(),
 });
 
-const schema = Joi.array().items(itemSchema);
-
-const errorText = 'The parameters are entered incorrectly, they should look like this: [{"serialNumber": "123", "temperature": 1234.5, "date": "2023-01-01-12:34:56"}]';
-
 app.post('/add-array', async (req, res) => {
-  const data = req.body;
-  const db = client.db(dbName);
-  const collection = db.collection('temperatureData');
-  
   try {
+    const data = req.body;
+
+    const schema = Joi.array().items(itemSchema);
     await schema.validateAsync(data);
+    
+    const errorText = 'The parameters are entered incorrectly, they should look like this: [{"serialNumber": "123", "temperature": 1234.5, "date": "2023-01-01-12:34:56"}]';
+
     
     for (let i = 0; i < data.length; i++) {
       const item = data[i];
@@ -63,9 +72,6 @@ app.post('/add-array', async (req, res) => {
 });
 
 app.get('/base/:id?', async (req, res) => { 
-  const db = client.db(dbName);
-  const collection = db.collection('temperatureData');
-
   try {
     if (req.params.id) {
       
@@ -87,17 +93,14 @@ app.get('/base/:id?', async (req, res) => {
 });
 
 app.delete('/clean-array/:id?', async (req, res) => {
-  const db = client.db(dbName);
-  const collection = db.collection('temperatureData');
-
   try {
     if (req.params.id) {
-      const doc = await collection.findOne({ _id: new mongodb.ObjectId(req.params.id) });
+      const doc = await collection.findOne({ serialNumber: req.params.id });
 
-      if (!doc) return res.status(404).send(`Document with id "${req.params.id}" not found`);
+      if (!doc) return res.status(404).send(`Document with serialNumber "${req.params.id}" not found`);
 
-      await collection.deleteOne({ _id: new mongodb.ObjectId(req.params.id) });      
-      res.send(`Deleted document with id "${req.params.id}"`);
+      await collection.deleteOne({ serialNumber: req.params.id });      
+      res.send(`Deleted document with serialNumber "${req.params.id}"`);
     } else {
       await collection.drop();
       
@@ -112,8 +115,6 @@ app.delete('/clean-array/:id?', async (req, res) => {
 
 // Example: http://localhost:3000/average?from=2020-04-05-18:59:04&to=2024-04-05-18:59:59
 app.get('/average', async (req, res) => {
-  const db = client.db(dbName);
-  const collection = db.collection('temperatureData');
   const from = req.query.from;
   const to = req.query.to;
 
@@ -156,9 +157,6 @@ app.get('/average', async (req, res) => {
 
 // Example: http://localhost:3000/sensor_data/41244124463634?startDate=2020-01-01-11:00:00&endDate=2024-01-01-23:59:59
 app.get('/sensor_data/:id', async (req, res) => {
-  const db = client.db(dbName);
-  const collection = db.collection('temperatureData');
-
   const query = { serialNumber: req.params.id };
   const startDate = req.query.startDate;
   const endDate = req.query.endDate;
