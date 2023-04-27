@@ -44,15 +44,16 @@ const itemSchema = Joi.object({
 });
 
 app.post('/add-array', async (req, res) => {
+  const errorMessage = 'The parameters are entered incorrectly, they should look like this:';
+  const errorExample = [{"serialNumber": "123", "temperature": 1234.5, "date": "2023-01-01-12:34:56"}];
+  
   try {
     const data = req.body;
 
     const schema = Joi.array().items(itemSchema);
     await schema.validateAsync(data);
     
-    const errorText = 'The parameters are entered incorrectly, they should look like this: [{"serialNumber": "123", "temperature": 1234.5, "date": "2023-01-01-12:34:56"}]';
 
-    
     for (let i = 0; i < data.length; i++) {
       const item = data[i];
       const date = new Date(item.date.replace(/-/g, '/'));
@@ -63,11 +64,17 @@ app.post('/add-array', async (req, res) => {
     }
 
     const result = await collection.insertMany(data);
-
-    res.status(200).send(`The data array is added to the temperatureData collection`);
+    
+    res.status(200).json({
+      Successfully: `The data array is added to the temperatureData collection`,
+      Result: data
+    });
   } catch (err) {
     console.error(err);
-    res.status(400).send(errorText);
+    res.status(400).json({
+      Error: errorMessage,
+      Example: errorExample
+    });
   }
 });
 
