@@ -3,7 +3,7 @@ const express = require('express');
 const { MongoClient } = require('mongodb');
 const Joi = require('joi');
 const swaggerUi = require('swagger-ui-express');
-const swaggerDocument = require('./swagger.json');
+const swaggerDocument = require('./swagger/swagger.json');
 
 // Express.js
 const app = express();

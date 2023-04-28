@@ -1,0 +1,263 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Temperature Data API",
+        "description": "API for storing processing of temperature sensors",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:3000/",
+            "description": "Local server"
+        }
+    ],
+    "paths": {
+        "/add-array": {
+            "post": {
+                "summary": "Add an array of temperature data",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/TemperatureData"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "Successfully": {
+                                            "type": "string"
+                                        },
+                                        "Result": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TemperatureData"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input parameters",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "Error": {
+                                            "type": "string"
+                                        },
+                                        "Example": {
+                                            "type": "array",
+                                            "items": {
+                                                "serialNumber": "string",
+                                                "temperature": "number",
+                                                "date": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/base/{id}": {
+          "get": {
+              "summary": "Get temperatureData by serial number",
+              "parameters": [
+                  {
+                      "name": "id",
+                      "in": "path",
+                      "description": "Serial number of temperature data to retrieve",
+                      "required": true,
+                      "schema": {
+                          "type": "string"
+                      }
+                  }
+              ],
+              "responses": {
+                  "200": {
+                      "description": "Success",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/TemperatureData"
+                              }
+                          }
+                      }
+                  },
+                  "404": {
+                      "description": "No information found for given serial number",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/ErrorResponse"
+                              }
+                          }
+                      }
+                  },
+                  "500": {
+                      "description": "Internal server error",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/ErrorResponse"
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      },
+      "components": {
+          "schemas": {
+              "TemperatureData": {
+                  "type": "object",
+                  "properties": {
+                      "id": {
+                          "type": "string"
+                      },
+                      "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
+                      },
+                      "temperature": {
+                          "type": "number"
+                      }
+                  }
+              },
+              "ErrorResponse": {
+                  "type": "object",
+                  "properties": {
+                      "error": {
+                          "type": "string"
+                      }
+                  }
+              }
+          }
+      },      
+        "/base": {
+          "get": {
+            "summary": "Get the entire temperatureData collection",
+            "responses": {
+              "200": {
+                "description": "Success",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/TemperatureDataCollection"
+                    }
+                  }
+                }
+              },
+              "500": {
+                "description": "Internal server error",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "/average": {
+          "get": {
+              "summary": "Get the average temperature between two dates",
+              "parameters": [
+                  {
+                      "name": "from",
+                      "in": "query",
+                      "required": true,
+                      "description": "Start date in the format of YYYY-MM-DD-HH:mm:ss."
+                  },
+                  {
+                      "name": "to",
+                      "in": "query",
+                      "required": true,
+                      "description": "End date in the format of YYYY-MM-DD-HH:mm:ss."
+                  }
+              ],
+              "responses": {
+                  "200": {
+                      "description": "Returns the average temperature between two dates.",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "avgTemperature": {
+                                          "type": "number"
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  },
+                  "400": {
+                      "description": "Invalid date format",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/ErrorResponse"
+                              }
+                          }
+                      }
+                  },
+                  "500": {
+                      "description": "Internal server error",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/ErrorResponse"
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      }     
+
+    },
+    "components": {
+        "schemas": {
+            "TemperatureData": {
+                "type": "object",
+                "properties": {
+                    "serialNumber": {
+                        "type": "string"
+                    },
+                    "temperature": {
+                        "type": "number"
+                    },
+                    "date": {
+                        "type": "string",
+                        "pattern": "^(?:[0-9]{4})-(?:(?:0[1-9])|(?:1[0-2]))-(?:(?:0[1-9])|(?:[1-2][0-9])|(?:3[0-1]))-(?:(?:[0-1][0-9])|(?:2[0-3])):(?:(?:[0-5][0-9])|(?:59)):(?:(?:[0-5][0-9])|(?:59))$"
+                    }
+                },
+                "required": [
+                    "serialNumber",
+                    "temperature",
+                    "date"
+                ]
+            }
+        }
+    }
+}
