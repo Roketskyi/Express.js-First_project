@@ -77,167 +77,329 @@
             }
         },
         "/base/{id}": {
-          "get": {
-              "summary": "Get temperatureData by serial number",
-              "parameters": [
-                  {
-                      "name": "id",
-                      "in": "path",
-                      "description": "Serial number of temperature data to retrieve",
-                      "required": true,
-                      "schema": {
-                          "type": "string"
-                      }
-                  }
-              ],
-              "responses": {
-                  "200": {
-                      "description": "Success",
-                      "content": {
-                          "application/json": {
-                              "schema": {
-                                  "$ref": "#/components/schemas/TemperatureData"
-                              }
-                          }
-                      }
-                  },
-                  "404": {
-                      "description": "No information found for given serial number",
-                      "content": {
-                          "application/json": {
-                              "schema": {
-                                  "$ref": "#/components/schemas/ErrorResponse"
-                              }
-                          }
-                      }
-                  },
-                  "500": {
-                      "description": "Internal server error",
-                      "content": {
-                          "application/json": {
-                              "schema": {
-                                  "$ref": "#/components/schemas/ErrorResponse"
-                              }
-                          }
-                      }
-                  }
-              }
-          }
-      },
-      "components": {
-          "schemas": {
-              "TemperatureData": {
-                  "type": "object",
-                  "properties": {
-                      "id": {
-                          "type": "string"
-                      },
-                      "timestamp": {
-                          "type": "string",
-                          "format": "date-time"
-                      },
-                      "temperature": {
-                          "type": "number"
-                      }
-                  }
-              },
-              "ErrorResponse": {
-                  "type": "object",
-                  "properties": {
-                      "error": {
-                          "type": "string"
-                      }
-                  }
-              }
-          }
-      },      
-        "/base": {
-          "get": {
-            "summary": "Get the entire temperatureData collection",
-            "responses": {
-              "200": {
-                "description": "Success",
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "$ref": "#/components/schemas/TemperatureDataCollection"
+            "get": {
+                "summary": "Get temperatureData by serial number",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Serial number of temperature data to retrieve",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
-                  }
-                }
-              },
-              "500": {
-                "description": "Internal server error",
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TemperatureData"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No information found for given serial number",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
                     }
-                  }
                 }
-              }
             }
-          }
+        },
+        "/base": {
+            "get": {
+                "summary": "Get the entire temperatureData collection",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TemperatureData"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         },
         "/average": {
-          "get": {
-              "summary": "Get the average temperature between two dates",
-              "parameters": [
-                  {
-                      "name": "from",
-                      "in": "query",
-                      "required": true,
-                      "description": "Start date in the format of YYYY-MM-DD-HH:mm:ss."
-                  },
-                  {
-                      "name": "to",
-                      "in": "query",
-                      "required": true,
-                      "description": "End date in the format of YYYY-MM-DD-HH:mm:ss."
-                  }
-              ],
-              "responses": {
-                  "200": {
-                      "description": "Returns the average temperature between two dates.",
-                      "content": {
-                          "application/json": {
-                              "schema": {
-                                  "type": "object",
-                                  "properties": {
-                                      "avgTemperature": {
-                                          "type": "number"
-                                      }
-                                  }
-                              }
-                          }
-                      }
-                  },
-                  "400": {
-                      "description": "Invalid date format",
-                      "content": {
-                          "application/json": {
-                              "schema": {
-                                  "$ref": "#/components/schemas/ErrorResponse"
-                              }
-                          }
-                      }
-                  },
-                  "500": {
-                      "description": "Internal server error",
-                      "content": {
-                          "application/json": {
-                              "schema": {
-                                  "$ref": "#/components/schemas/ErrorResponse"
-                              }
-                          }
-                      }
-                  }
-              }
-          }
-      }     
-
+            "get": {
+                "summary": "Get the average temperature between two dates",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "description": "Start date in the format of YYYY-MM-DD-HH:mm:ss."
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "description": "End date in the format of YYYY-MM-DD-HH:mm:ss."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns the average temperature between two dates.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "avgTemperature": {
+                                            "type": "number"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid date format",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/sensor_data/{id}": {
+            "get": {
+                "summary": "Get sensor data for a specific ID and time period",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The ID of the sensor",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "startDate",
+                        "in": "query",
+                        "required": false,
+                        "description": "The start date of the time period to retrieve data for (format: 'YYYY-MM-DD-hh:mm:ss')",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}-\\d{2}:\\d{2}:\\d{2}$",
+                            "example": "2023-01-11-11:12:59"
+                        }
+                    },
+                    {
+                        "name": "endDate",
+                        "in": "query",
+                        "required": false,
+                        "description": "The end date of the time period to retrieve data for (format: 'YYYY-MM-DD-hh:mm:ss')",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}-\\d{2}:\\d{2}:\\d{2}$",
+                            "example": "2023-12-15-14:12:59"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SensorData"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No data found for the specified time period",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/clean-array/{id}": {
+            "delete": {
+                "summary": "Deletes a document from a MongoDB collection",
+                "description": "Deletes the document with the specified serialNumber from the MongoDB collection. If the serialNumber is not provided, it deletes all documents from the collection.",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "The serialNumber of the document to delete",
+                        "required": false,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The document was deleted successfully",
+                        "schema": {
+                            "type": "string",
+                            "description": "A message indicating the success of the operation"
+                        }
+                    },
+                    "404": {
+                        "description": "The document with serialNumber \"${id}\" not found in the MongoDB collection",
+                        "schema": {
+                            "type": "string",
+                            "description": "An error message"
+                        }
+                    },
+                    "500": {
+                        "description": "An internal server error occurred while processing the request",
+                        "schema": {
+                            "type": "string",
+                            "description": "An error message"
+                        }
+                    }
+                }
+            }
+        },
+        "/clean-array": {
+            "delete": {
+                "summary": "Deletes documents from a MongoDB collection",
+                "description": "Deletes documents from the MongoDB collection with the specified serialNumber. If the serialNumber is not provided, it deletes all documents from the collection.",
+                "responses": {
+                    "200": {
+                        "description": "The document(s) were deleted successfully",
+                        "schema": {
+                            "type": "string",
+                            "description": "A message indicating the success of the operation"
+                        }
+                    },
+                    "404": {
+                        "description": "The document(s) with the specified serialNumber(s) not found in the MongoDB collection",
+                        "schema": {
+                            "type": "string",
+                            "description": "An error message"
+                        }
+                    },
+                    "500": {
+                        "description": "An internal server error occurred while processing the request",
+                        "schema": {
+                            "type": "string",
+                            "description": "An error message"
+                        }
+                    }
+                }
+            }
+        }
     },
     "components": {
         "schemas": {
+            "SensorData": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "serialNumber": {
+                                    "type": "string"
+                                },
+                                "temperature": {
+                                    "type": "number"
+                                },
+                                "date": {
+                                    "type": "string",
+                                    "pattern": "^\\d{4}-\\d{2}-\\d{2}-\\d{2}:\\d{2}:\\d{2}$"
+                                }
+                            },
+                            "required": [
+                                "serialNumber",
+                                "temperature",
+                                "date"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "data"
+                ]
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    }
+                }
+            },
             "TemperatureData": {
                 "type": "object",
                 "properties": {
