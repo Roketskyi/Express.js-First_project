@@ -194,8 +194,6 @@ app.get('/sensor_data/:id', async (req, res) => {
 
     if (err.message === 'Incorrect date format') {
       res.status(400).send('Date entered incorrectly. Example: http://localhost:3000/sensor_data/14?startDate=2020-01-01-11:00:00&endDate=2024-01-01-23:59:59');
-    } else if (err.message === 'Missing endDate') {
-      res.status(400).send('Missing endDate');
     } else {
       res.status(500).send(err.message);
     }
