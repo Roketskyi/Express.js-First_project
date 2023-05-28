@@ -79,9 +79,34 @@ app.post('/add-array', async (req, res) => {
 // Example: http://localhost:3000/base || http://localhost:3000/base/15
 app.get('/base/:id?', async (req, res) => { 
   try {
+    const page = req.query.page || 1;
+    const perPage = 10;
+    const skip = (page - 1) * perPage;
+
+    if (req.params.id) {
+      const document = await collection.find({ serialNumber: req.params.id }).limit(perPage).skip(skip).toArray();
+      if (document.length > 0) {
+        res.json(document);
+      } else {
+        res.status(404).send('There is no information');
+      }
+    } else {
+      const documents = await collection.find().limit(perPage).skip(skip).toArray();
+      res.status(200).json(documents);
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send(err.message);
+  }
+});
+
+/*
+
+app.get('/base/:id?', async (req, res) => { 
+  try {
     if (req.params.id) {
       
-      const document = await collection.findOne({ serialNumber: req.params.id });
+      const document = await collection.find({ serialNumber: req.params.id }).toArray();
       if (document) {
         res.json(document);
       } else {
@@ -97,6 +122,9 @@ app.get('/base/:id?', async (req, res) => {
     res.status(500).send(err.message);
   }
 });
+
+*/
+
 
 // Example: http://localhost:3000/clean-array/ || http://localhost:3000/clean-array/18
 app.delete('/clean-array/:id?', async (req, res) => {
@@ -126,7 +154,17 @@ app.get('/average', async (req, res) => {
   const to = req.query.to;
 
   if (!dateRegex.test(from) || !dateRegex.test(to)) {
-    return res.status(400).send('Date entered incorrectly. Example: http://localhost:3000/average?from=2020-04-05-18:59:04&to=2024-04-05-18:59:59');
+    return res.status(400).json({
+      Error: 'Date entered incorrectly',
+      Example: 'http://localhost:3000/average?from=2020-04-05-18:59:04&to=2024-04-05-18:59:59'
+    });
+  }
+
+  if (from > to) {
+    return res.status(400).json({
+      Error: `Invalid date range. 'from' date should be earlier than 'to' date`,
+      Example: 'http://localhost:3000/average?from=2020-01-11-11:12:59&to=2024-01-11-11:12:59'
+    });
   }
 
   try {
@@ -153,6 +191,10 @@ app.get('/average', async (req, res) => {
         },
       },
     ]).toArray();
+    
+    if (result.length === 0) {
+      return res.status(200).json([{ avgTemperature: 0 }]);
+    }
 
     res.status(200).json(result);
   } catch (err) {
